@@ -49,6 +49,26 @@ This document tracks the reverse engineering process for the `color_cal` file fo
 
 ## Current Understanding of Format (31 bytes total)
 
+## Sample 2: Erich's C3X (`samples/erich/color_cal`)
+
+Analysis performed using the updated `analyze_cal.py` script.
+
+- **File Size:** 31 bytes
+- **Hex Data:** `853b6c392e2a25219033e23aa928812ddb2da13b003c7c3c2b400000000064`
+- **Unpacked Values (13 half-floats):**
+    - Gamma: 0.9399
+    - CCM: [0.6777, 0.0483, 0.0100], [0.2363, 0.8604, 0.0364], [0.0860, 0.0915, 0.9536]
+    - WB Gains: [R=1.0000, G=1.1211, B=2.0840]
+- **Remaining Bytes (5 bytes):** `b'\x00\x00\x00\x00d'` (hex: `0000000064`)
+- **Checksum Test (Simple Sum Mod 256):** Failed (Sum mod 256 = 164, Last byte = 100 (0x64)).
+
+**Observations:**
+- Consistent 31-byte structure.
+- First 26 bytes are calibration data (13 half-floats).
+- Next 4 bytes are consistently null (`0x00000000`).
+- Final byte varies between samples (`0x24` vs `0x64`), ruling out a fixed delimiter and simple sum checksum. Its purpose remains unknown.
+
+
 *   **Bytes 0-25 (26 bytes):** Calibration Data
     *   13 x little-endian half-precision floats (binary16)
     *   Order: Gamma (1), CCM (9), WB Gains (3)

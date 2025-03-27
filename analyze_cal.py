@@ -1,50 +1,37 @@
 import binascii
 import struct
+import sys
+import os
 
-# Hex string from the QR code in README.md
-hex_string = "4b3d9e388b29b1184333273a9f2645320032c63b003cf53d92430000000024"
+def analyze_color_cal(file_path):
+    """Analyzes a color_cal binary file."""
+    if not os.path.exists(file_path):
+        print(f"Error: File not found at {file_path}")
+        return
 
-# Decode the hex string into bytes
-try:
-    binary_data = binascii.unhexlify(hex_string)
-    print(f"Successfully decoded hex string.")
-    print(f"Hex String: {hex_string}")
-    print(f"Length of Hex String: {len(hex_string)}")
-    print(f"Binary Data (raw bytes): {binary_data}")
-    print(f"Length of Binary Data (bytes): {len(binary_data)}") # Correct length is 31 bytes
-
-    # Next steps: Try interpreting these bytes as different data types
-    # Assuming little-endian based on common architectures
-
-    # Total number of bytes is 31.
-    # Let's examine the known values:
-    # Gamma: 1.32 (float)
-    # CCM: 9 floats (0.58, 0.04, 0.0, 0.23, 0.77, 0.03, 0.2, 0.19, 0.97)
-    # WB gains: 3 floats (1.00, 1.49, 3.78)
-    # Total known floats: 1 + 9 + 3 = 13 floats.
-    # If they are 4-byte floats, that would be 13 * 4 = 52 bytes. This doesn't match the 39 bytes.
-    # If they are 2-byte floats (half-precision), that would be 13 * 2 = 26 bytes. This leaves 39 - 26 = 13 bytes unaccounted for.
-    # If they are a mix, or some other encoding is used, it needs investigation.
-
-    # Let's try unpacking assuming 4-byte floats (single precision) from the start
-    num_floats_possible = len(binary_data) // 4
-    print(f"\nAttempting to unpack as {num_floats_possible} single-precision floats (little-endian):")
+    print(f"--- Analyzing file: {file_path} ---")
     try:
-        floats = struct.unpack(f'<{num_floats_possible}f', binary_data[:num_floats_possible*4])
-        for i, f in enumerate(floats):
-            print(f"Float {i}: {f:.4f}")
-    except struct.error as e:
-        print(f"Could not unpack as floats: {e}")
+        with open(file_path, 'rb') as f:
+            binary_data = f.read()
+    except IOError as e:
+        print(f"Error reading file: {e}")
+        return
 
-    # Let's try unpacking assuming 2-byte floats (half precision) from the start
-    # We expect 13 values (Gamma + 9 CCM + 3 WB) = 26 bytes
+    file_size = len(binary_data)
+    print(f"File Size: {file_size} bytes")
+    print(f"Binary Data (hex): {binascii.hexlify(binary_data).decode()}")
+
+    if file_size != 31:
+        print(f"\nWarning: Expected file size of 31 bytes, but got {file_size}. Analysis assumes 31-byte structure.")
+        # Continue analysis, but results might be unreliable if size differs
+
+    # --- Analysis Logic ---
     num_expected_halfs = 13
-    bytes_for_halfs = num_expected_halfs * 2
+    bytes_for_halfs = num_expected_halfs * 2 # 26 bytes
+
     print(f"\nAttempting to unpack first {bytes_for_halfs} bytes as {num_expected_halfs} half-precision floats (little-endian, format 'e'):")
-    if len(binary_data) >= bytes_for_halfs:
+    if file_size >= bytes_for_halfs:
         try:
-            # '<' for little-endian, '13e' for 13 half-precision floats
-            # '<' for little-endian, '13e' for 13 half-precision floats
             calibration_data_bytes = binary_data[:bytes_for_halfs]
             half_floats = struct.unpack(f'<{num_expected_halfs}e', calibration_data_bytes)
 
@@ -61,46 +48,25 @@ try:
             print("  WB Gains (White Balance):")
             print(f"    [R={wb_gains[0]:.4f}, G={wb_gains[1]:.4f}, B={wb_gains[2]:.4f}]")
 
-
-            # Compare with known values (already done, but keep for verification)
-            # ... comparison code remains the same ...
-            print("\nComparing with known values from sticker:")
-            known_gamma = 1.32
-            known_ccm = [0.58, 0.04, 0.0, 0.23, 0.77, 0.03, 0.2, 0.19, 0.97]
-            known_wb = [1.00, 1.49, 3.78]
-            all_known = [known_gamma] + known_ccm + known_wb
-
-            match = True
-            for i in range(num_expected_halfs):
-                if not abs(half_floats[i] - all_known[i]) < 0.01:
-                    print(f"Mismatch at index {i}: Unpacked={half_floats[i]:.4f}, Known={all_known[i]:.2f}")
-                    match = False
-
-            if match:
-                print("All unpacked values match the known sticker values (within tolerance)!")
-            else:
-                print("Unpacked values do NOT perfectly match known sticker values.")
-
-
         except struct.error as e:
             print(f"Could not unpack as half-floats: {e}")
         except Exception as e:
             print(f"An error occurred during half-float unpacking: {e}")
     else:
-        print(f"Binary data is too short ({len(binary_data)} bytes) to unpack {num_expected_halfs} half-floats.")
+        print(f"Binary data is too short ({file_size} bytes) to unpack {num_expected_halfs} half-floats.")
 
     # Analyze remaining bytes
-    if len(binary_data) > bytes_for_halfs:
+    if file_size > bytes_for_halfs:
         remaining_bytes = binary_data[bytes_for_halfs:]
-        print(f"\nRemaining {len(remaining_bytes)} bytes: {remaining_bytes}")
+        num_remaining = len(remaining_bytes)
+        print(f"\nRemaining {num_remaining} bytes: {remaining_bytes}")
         print(f"Hex representation: {binascii.hexlify(remaining_bytes).decode()}")
-        # Expected: b'\x00\x00\x00\x00$' (hex: 0000000024) - 5 bytes
 
-        # Checksum hypothesis: Sum of first 26 bytes mod 256 == last byte?
-        if len(remaining_bytes) == 5:
+        # Checksum hypothesis test (only if file size is exactly 31)
+        if file_size == 31 and num_remaining == 5:
             calculated_checksum = sum(calibration_data_bytes) % 256
             last_byte = remaining_bytes[-1]
-            print(f"\nChecksum Test:")
+            print(f"\nChecksum Test (Simple Sum Mod 256):")
             print(f"  Sum of first {bytes_for_halfs} bytes: {sum(calibration_data_bytes)}")
             print(f"  Sum mod 256: {calculated_checksum}")
             print(f"  Last byte of data: {last_byte} (0x{last_byte:02x})")
@@ -108,9 +74,20 @@ try:
                 print("  Checksum matches!")
             else:
                 print("  Checksum does NOT match.")
-        else:
-             print("\nCould not perform checksum test: Unexpected number of remaining bytes.")
+        elif file_size == 31: # Should have 5 remaining bytes if size is 31
+             print("\nCould not perform checksum test: Incorrect number of remaining bytes for a 31-byte file.")
+    elif file_size == bytes_for_halfs:
+         print("\nNo remaining bytes after unpacking floats.")
+    else: # file_size < bytes_for_halfs
+         print("\nNo remaining bytes to analyze (file too short).")
+
+    print(f"\n--- Analysis complete for: {file_path} ---")
 
 
-except binascii.Error as e:
-    print(f"Error decoding hex string: {e}")
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python analyze_cal.py <path_to_color_cal_file>")
+        sys.exit(1)
+
+    input_file = sys.argv[1]
+    analyze_color_cal(input_file)

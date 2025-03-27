@@ -6,6 +6,8 @@ It is read by `weston`, which is a currently the closed source compositor in AGN
 
 The format is undocumented. This repository contains a reverse engineering effort to document the format and provide tools for working with the `color_cal` file.
 
+The goal is to understand the format of the `color_cal` file for the purpose of creating a custom color calibration file for the display in the future.
+
 ## Notes
 
 Repair displays directly from [comma's shop](https://comma.ai/shop) come with this sticker.

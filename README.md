@@ -32,3 +32,6 @@ WB gains:
 2025-03-10 09:24:40
 ```
 
+### Samples
+
+Erich provided a sample of the `color_cal` file from his c3x. It is located in `samples/erich/color_cal`. This is from a finished c3x so there's no sticker data to correlate it to.

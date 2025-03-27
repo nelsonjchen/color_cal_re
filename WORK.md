@@ -79,6 +79,26 @@ Analysis performed using the updated `analyze_cal.py` script.
 
 ## Further Investigation Ideas
 
-*   Obtain more `color_cal` examples (different devices/batches) to see how the last 5 bytes vary.
-*   Analyze the `weston` binary (if possible, though it's closed source) to see how it reads and interprets this file.
-*   Check if the timestamp `2025-03-10 09:24:40` relates to the data in any non-obvious way (unlikely given the remaining bytes).
+*   ~~Obtain more `color_cal` examples (different devices/batches) to see how the last 5 bytes vary.~~ (Still useful for understanding *generation*, but not *usage* by weston).
+*   **Analyze the `weston` binary:** Done via decompiled `gl-renderer-src/comma-modified-decompiled.c`.
+*   ~~Check if the timestamp `2025-03-10 09:24:40` relates to the data in any non-obvious way (unlikely given the remaining bytes).~~
+
+## Final Findings from Decompiled Code (`gl-renderer-src/comma-modified-decompiled.c`)
+
+Analysis of the `read_correction_values` function (responsible for loading the calibration data) revealed the following:
+
+1.  **Structure Definition:** The code uses a `struct color_correction_values` defined as:
+    ```c
+    struct color_correction_values {
+        uint16_t gamma;         // 2 bytes
+        uint16_t ccm[9];        // 18 bytes
+        uint16_t rgb_color_gains[3]; // 6 bytes
+    }; // Total: 26 bytes
+    ```
+    This matches the 13 half-float values identified earlier. The `uint16_t` values are treated as half-float bit patterns.
+
+2.  **Memory Allocation & Reading:** The function allocates exactly 26 bytes (`malloc(0x1a)`) for this structure and reads exactly 26 bytes from the `color_cal` file using `fread(ptr, 0x1a, 1, stream)`.
+
+3.  **Ignored Bytes:** The code **does not read or use any data beyond the first 26 bytes**.
+
+**Conclusion:** The final 5 bytes (`00000000` + `XX`) present in the `color_cal` files are **ignored** by the `weston` gl-renderer component responsible for applying the color calibration. Their purpose might relate to the manufacturing/calibration process or other tools, but they do not affect the runtime color correction performed by `weston` based on this code.

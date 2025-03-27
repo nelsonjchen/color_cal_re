@@ -38,7 +38,7 @@ Erich provided a sample of the `color_cal` file from his c3x. It is located in `
 
 #### gl-renderer-src
 
-GL Renderer has the log strings for the color calibration data with comma's modifications.
+`gl-renderer.so` has the log strings for the color calibration data with comma's modifications. This is linked by `weston`.
 
 `gl-renderer-src/comma-modified-decompiled.c` is the decompiled with Ghidra's decompiler.
 

@@ -35,3 +35,11 @@ WB gains:
 ### Samples
 
 Erich provided a sample of the `color_cal` file from his c3x. It is located in `samples/erich/color_cal`. This is from a finished c3x so there's no sticker data to correlate it to.
+
+#### gl-renderer-src
+
+GL Renderer has the log strings for the color calibration data with comma's modifications.
+
+`gl-renderer-src/comma-modified-decompiled.c` is the decompiled with Ghidra's decompiler.
+
+`gl-renderer-src/upstream.c` is the upstream version of the file from [weston's project](https://gitlab.freedesktop.org/wayland/weston/-/raw/master/libweston/renderer-gl/gl-renderer.c). It's unknown how closely this matches the version used in AGNOS. It's there for reference.

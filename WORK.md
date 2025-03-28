@@ -79,6 +79,22 @@ Analysis performed using the updated `analyze_cal.py` script.
 
 ## Further Investigation Ideas
 
+## Shader Logic and Simulation
+
+Analysis of the `color_correction_get_shader` function in the decompiled code revealed how the calibration values are used:
+
+1.  **Half-Float Decoding:** The `uint16_t` values are manually decoded into standard floats.
+2.  **GLSL Generation:** A GLSL fragment shader snippet is dynamically generated, hardcoding the calibration values (or derived values like inverse WB gains and gamma factor).
+3.  **Correction Steps (in GLSL):**
+    a.  Linearize input color (inverse EOTF using `pow(..., 2.2)`).
+    b.  Apply White Balance correction (multiply by inverse gains).
+    c.  Apply Color Correction Matrix (CCM) via matrix multiplication.
+    d.  Apply Gamma correction and forward EOTF (`pow(..., gamma_cal / 2.2)`).
+
+**Simulation Tool:**
+A Python script `simulate_correction.py` has been created to replicate this process. It reads a `color_cal` file and applies the same sequence of transformations to input RGB values, allowing for testing and verification of the correction effect.
+
+
 *   ~~Obtain more `color_cal` examples (different devices/batches) to see how the last 5 bytes vary.~~ (Still useful for understanding *generation*, but not *usage* by weston).
 *   **Analyze the `weston` binary:** Done via decompiled `gl-renderer-src/comma-modified-decompiled.c`.
 *   ~~Check if the timestamp `2025-03-10 09:24:40` relates to the data in any non-obvious way (unlikely given the remaining bytes).~~

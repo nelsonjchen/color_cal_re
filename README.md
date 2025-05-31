@@ -8,6 +8,8 @@ The format is undocumented. This repository contains a reverse engineering effor
 
 The goal is to understand the format of the `color_cal` file for the purpose of creating a custom color calibration file for the display in the future.
 
+Much of this work was done by Roo Code with Gemini 2 backing it. See the rules files for the prompt. 
+
 ## Notes
 
 Repair displays directly from [comma's shop](https://comma.ai/shop) come with this sticker.

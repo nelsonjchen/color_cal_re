@@ -5,7 +5,7 @@
 
 comma devices have a `color_cal` file in `/persist/commma`. It is responsible for the color calibration of the display. The file is a binary file that contains the color calibration data for the display.
 
-It is read by `weston`, which is a currently the closed source compositor in AGNOS, the operating system used by comma devices.
+It is read by `weston`, which is a currently a closed source fork compositor of the upstream `weston` server in AGNOS, the operating system used by comma devices.
 
 The format is undocumented. This repository contains a reverse engineering effort to document the format and provide tools for working with the `color_cal` file.
 

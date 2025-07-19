@@ -1,5 +1,8 @@
 # comma Color Calibration Reverse Engineering
 
+> [!NOTE] 
+> This repo was discussed and produced in this thread on [comma's Discord](https://discord.comma.ai): https://discord.com/channels/469524606043160576/1354453342000255199
+
 comma devices have a `color_cal` file in `/persist/commma`. It is responsible for the color calibration of the display. The file is a binary file that contains the color calibration data for the display.
 
 It is read by `weston`, which is a currently the closed source compositor in AGNOS, the operating system used by comma devices.

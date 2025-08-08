@@ -1,6 +1,7 @@
 import struct
 import sys
 import binascii
+import os
 
 def generate_color_cal(output_path, gamma, ccm_values, wb_gains):
     """
@@ -24,6 +25,11 @@ def generate_color_cal(output_path, gamma, ccm_values, wb_gains):
         raise ValueError("Internal error: Expected 13 values total.")
 
     try:
+        # Create the output directory if it doesn't exist
+        output_dir = os.path.dirname(output_path)
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+
         # Pack the 13 floats as little-endian half-precision floats
         packed_data = struct.pack('<13e', *all_values) # Use '<' for little-endian
 

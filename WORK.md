@@ -118,3 +118,22 @@ Analysis of the `read_correction_values` function (responsible for loading the c
 3.  **Ignored Bytes:** The code **does not read or use any data beyond the first 26 bytes**.
 
 **Conclusion:** The final 5 bytes (`00000000` + `XX`) present in the `color_cal` files are **ignored** by the `weston` gl-renderer component responsible for applying the color calibration. Their purpose might relate to the manufacturing/calibration process or other tools, but they do not affect the runtime color correction performed by `weston` based on this code.
+## Color Adaptation
+
+The primary goal of this reverse engineering effort was to create a method to make a new screen display colors as if it were an old screen. This was achieved by creating an `adapt.py` script that generates a new `color_cal` file.
+
+### Theory
+
+The color transformation pipeline is a series of mathematical operations. To make the new screen look like the old one, we need to apply a transformation that is equivalent to applying the old screen's calibration and undoing the new screen's calibration.
+
+The transformation `T_adapt` is calculated as: `T_adapt = T_old * T_new^-1`
+
+This is broken down for each component:
+
+*   **Gamma:** The adapted gamma is simply the old gamma value. `gamma_adapted = gamma_old`
+*   **White Balance (WB):** The adapted gains are the old gains divided by the new gains. `gains_adapted = gains_old / gains_new`
+*   **Color Correction Matrix (CCM):** The adapted CCM is the old CCM multiplied by the inverse of the new CCM. `CCM_adapted = CCM_old * inverse(CCM_new)`
+
+### Implementation
+
+The `adapt.py` script implements this theory. It reads the two calibration files, calculates the new adapted values, and generates a new `color_cal` file.
